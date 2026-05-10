@@ -3,14 +3,16 @@
 An industrial-grade, state-machine-driven productivity controller developed for the **ATmega328P (Arduino Nano)** platform. This project demonstrates the complete engineering lifecycle, from firmware architecture and virtual circuit verification in **Proteus VSM** to a verified **physical hardware prototype**.
 
 ## 🛠️ Project Overview
-The ETMS is designed to automate work-rest cycles (Pomodoro technique) using a non-blocking firmware architecture. By utilizing the **I2C communication protocol**, the system minimizes GPIO overhead, allowing for future expansion of sensors or actuators.
+The ETMS is a specialized embedded solution designed to automate productivity cycles. By utilizing the **I2C communication protocol** and a non-blocking timing architecture, the system provides high responsiveness and precision for time-critical tasks.
 
-### Key Technical Features:
+### 🚀 Key Technical Features:
+* **Preset Operational Profiles (Dual-Mode):** Integrated support for industry-standard intervals:
+    * **Profile A:** 25-minute Work / 5-minute Break.
+    * **Profile B:** 50-minute Work / 10-minute Break.
 * **Finite State Machine (FSM):** Robust logic handling transitions between `WORK`, `BREAK`, `PAUSE`, and `ALARM` states.
-* **Non-Blocking Timing:** Implemented using `millis()` logic to ensure high responsiveness for user inputs and background tasks without processor stalls.
-* **I2C Bus Integration:** Drives a 16x2 LCD via the **PCF8574** I/O expander, reducing 6-pin parallel wiring to a 2-wire serial bus (**SDA/SCL**).
-* **EEPROM Data Persistence:** Automatic caching of cycle progress to non-volatile memory to prevent session loss during power interruptions.
-* **Hardware Verification:** Full schematic simulation in Proteus to pre-verify signal integrity, I2C addressing (**0x27**), and bus contention issues.
+* **Non-Blocking Timing:** Implemented using `millis()` logic to ensure continuous monitoring of user inputs (button interrupts) without processor stalls.
+* **I2C Bus Integration:** Drives a 16x2 LCD via the **PCF8574** I/O expander, optimizing the hardware footprint by reducing 6-pin parallel wiring to a 2-wire serial bus (**SDA/SCL**).
+* **EEPROM Persistence:** Automatic caching of session progress to non-volatile memory to prevent data loss during power interruptions.
 
 ---
 
@@ -19,17 +21,17 @@ The ETMS is designed to automate work-rest cycles (Pomodoro technique) using a n
 ### Hardware Configuration
 | Signal Name | MCU Pin | Peripheral | Purpose |
 | :--- | :--- | :--- | :--- |
-| **MAIN_CTRL** | D2 | Pulse Button | Start / Pause / Long Press Reset |
-| **MODE_SEL** | D3 | Pulse Button | Toggle Work/Break Durations |
-| **I2C_SDA** | A4 | PCF8574 | Data Line (4.7kΩ Pull-up) |
-| **I2C_SCL** | A5 | PCF8574 | Clock Line (4.7kΩ Pull-up) |
-| **IND_WORK** | D10 | LED (Red) | Active Work Phase Indicator |
-| **IND_BREAK** | D11 | LED (Green) | Active Break Phase Indicator |
+| **MAIN_CTRL** | D2 | Pulse Button | Start / Pause / Reset |
+| **MODE_SEL** | D3 | Pulse Button | **Toggle between 25/5 and 50/10 Profiles** |
+| **I2C_SDA** | A4 | PCF8574    | Data Line (4.7kΩ Pull-up) |
+| **I2C_SCL** | A5 | PCF8574    | Clock Line (4.7kΩ Pull-up) |
+| **IND_WORK** | D10| LED (Red)  | Active Work Phase Indicator |
+| **IND_BREAK** | D11| LED (Green)| Active Break Phase Indicator |
 
 ### Firmware Logic
-The core logic resides in a state-independent loop that monitors system time without halting the processor. This enables:
-1.  **Software-Based Debouncing:** Filtering mechanical noise from physical tactile switches for reliable triggering.
-2.  **Efficient Bus Management:** Display updates are triggered only on state changes to minimize I2C bus traffic.
+The firmware utilizes a non-polling approach for timing to allow for:
+1.  **Real-Time Parameter Switching:** Dynamically reassigning timer variables when the user toggles between the 25/5 and 50/10 presets.
+2.  **Software-Based Debouncing:** Filtering mechanical noise from tactile switches to ensure reliable state transitions in the physical prototype.
 
 ---
 
@@ -39,32 +41,32 @@ The core logic resides in a state-independent loop that monitors system time wit
 Before physical assembly, the circuit was modeled and stress-tested in **Proteus 8.9**. This phase was critical for:
 * Resolving `DSIM.DLL` access violations through optimized firmware linking.
 * Verifying I2C pull-up resistor requirements (4.7kΩ) for stable communication.
-* Validating the interrupt logic for button interactions.
+* Validating the interrupt logic for button interactions across different timing profiles.
 
 ### Phase 2: Physical Implementation
 The system was transitioned from simulation to a physical breadboard prototype to validate real-world performance.
-* **Hardware Validation:** Verified that the I2C backpack and LCD operated correctly under physical voltage conditions.
-* **Tactility Testing:** Confirmed the software's ability to handle physical switch "bounce" during rapid state transitions.
+* **Hardware Validation:** Confirmed that the I2C backpack and LCD operated correctly under physical voltage conditions.
+* **Tactility Testing:** Verified that the firmware successfully handled physical switch "bounce" during rapid profile switching.
 
 ---
 
 ## 🚀 Deployment Instructions
 
 1.  **Simulation:**
-    * Open `/Hardware/ETMS_Schematic.pdsprj` in Proteus.
-    * Link the `.hex` file (found in `/Firmware/Output/`) to the ATmega328P component.
-    * Run the simulation to observe state transitions.
+    * Open `/Hardware/ETMS_Hardware_Sim_v1.pdsprj` in Proteus.
+    * Link the compiled `.hex` file to the ATmega328P component.
+    * Run the simulation to observe state and profile transitions.
 
 2.  **Physical Hardware:**
-    * Flash the `.ino` source code using the Arduino IDE.
+    * Flash the `ETMS_v1.ino` source code using the Arduino IDE.
     * Connect the I2C LCD backpack to Pins A4 (SDA) and A5 (SCL).
-    * *Note: Use internal pull-ups or external 4.7kΩ resistors on the I2C lines.*
+    * *Note: Ensure the I2C address in the code matches your physical module (typically 0x27 or 0x3F).*
 
 ---
 
 ## 📁 Repository Structure
 ```text
-├── Firmware/             # C++ source code and compiled binaries
+├── Firmware/             # C++ source code and compiled binaries (.hex)
 ├── Hardware/             # Proteus project files and schematic PDFs
 ├── Media/                # Simulation screenshots and prototype photos
 └── README.md             # Technical documentation
